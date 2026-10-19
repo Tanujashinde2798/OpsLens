@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpsLens | Container Observability</title>
+  <style>
+    body { margin:0; background:#101827; color:#e5edf8;
+      font:15px Arial,sans-serif; }
+    header { padding:24px 5%; background:#182438; }
+    main { max-width:1100px; margin:28px auto; padding:0 20px; }
+    h1 { margin:0 0 8px; }
+    .muted { color:#a6b5ca; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+    .card { background:#1b2a40; padding:20px; border-radius:12px; }
+    .value { font-size:28px; font-weight:bold; margin-top:12px; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:12px; text-align:left; border-bottom:1px solid #33445b; }
+    .panel { margin-top:22px; overflow-x:auto; }
+    .good { color:#67e8a5; }
+    .bad { color:#fca5a5; }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>OpsLens</h1>
+  <div class="muted">Container Observability Platform · Auto-refresh every 10 seconds</div>
+</header>
+<main>
+  <div class="grid">
+    <div class="card">Host CPU<div class="value" id="cpu">Loading...</div></div>
+    <div class="card">Host Memory<div class="value" id="memory">Loading...</div></div>
+    <div class="card">Containers<div class="value" id="count">Loading...</div></div>
+    <div class="card">Application Errors<div class="value" id="errors">Loading...</div></div>
+  </div>
+  <section class="card panel">
+    <h2>Container health and resource usage</h2>
+    <table>
+      <thead><tr><th>Name</th><th>ID</th><th>Status</th><th>CPU</th><th>Memory</th></tr></thead>
+      <tbody id="containers"><tr><td colspan="5">Loading...</td></tr></tbody>
+    </table>
+  </section>
+  <section class="card panel">
+    <h2>Recent application errors</h2>
+    <pre id="loglist">Loading...</pre>
+  </section>
+  <p class="muted" id="updated"></p>
+</main>
+<script>
+async function refresh() {
+  try {
+    const response = await fetch('/api/metrics');
+    if (!response.ok) throw new Error('Metrics API failed');
+    const data = await response.json();
+    document.getElementById('cpu').textContent = data.host_cpu_percent + '%';
+    document.getElementById('memory').textContent = data.host_memory_percent + '%';
+    document.getElementById('count').textContent = data.containers.length;
+    document.getElementById('containers').innerHTML =
+      data.containers.map(c => `<tr>
+        <td>${c.name}</td><td>${c.id}</td>
+        <td class="${c.status === 'running' ? 'good':'bad'}">${c.status}</td>
+        <td>${c.cpu_percent}%</td><td>${c.memory_percent}%</td>
+      </tr>`).join('') ||
+      '<tr><td colspan="5">No containers found</td></tr>';
+
+    const logResponse = await fetch('/api/logs');
+    const logData = await logResponse.json();
+    document.getElementById('errors').textContent = logData.errors.length;
+    document.getElementById('loglist').textContent =
+      logData.errors.map(e => `[${e.container}] ${e.message}`).join('\n') ||
+      'No matching errors in recent container logs';
+    document.getElementById('updated').textContent =
+      'Last updated: ' + data.timestamp;
+  } catch (error) {
+    document.getElementById('updated').textContent =
+      'Monitoring error: ' + error.message;
+  }
+}
+refresh();
+setInterval(refresh, 10000);
+</script>
+</body>
+</html>

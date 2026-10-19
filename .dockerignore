@@ -1,0 +1,12 @@
+.venv
+.git
+__pycache__
+*.pyc
+logs/
+tests/
+.github
+.env
+.env.*
+!.env.example
+*.pem
+*.key
