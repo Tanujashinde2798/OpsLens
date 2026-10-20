@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'opslens'
-        IMAGE_TAG = 'jenkins-${BUILD_NUMBER}'
+       IMAGE_TAG = "jenkins-${BUILD_NUMBER}"
     }
 
     stages {
