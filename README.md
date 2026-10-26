@@ -1,4 +1,4 @@
-# 🚀 OpsLens — Container Observability Platform
+# OpsLens — Container Observability Platform
 
 **A lightweight container monitoring platform built with Python, Flask, Docker, Jenkins, and AWS.**
 
